@@ -1,0 +1,146 @@
+#!/usr/bin/env python3
+
+import sys
+import os
+
+home = os.path.expanduser("~") + "/.config/ToDo/"
+header = """
+┌───────────────────────────────────────────────────────────┐
+│                                                           │
+│           ████████  ██████  ██████   ██████               │
+│              ██    ██    ██ ██   ██ ██    ██              │
+│              ██    ██    ██ ██   ██ ██    ██              │
+│              ██    ██    ██ ██   ██ ██    ██              │
+│              ██     ██████  ██████   ██████               │
+│                                                           │ 
+└───────────────────────────────────────────────────────────┘                                                            
+"""
+
+def ParseAndPrint(todolist):
+    todos = todolist.split("\n")
+    new_list = ""
+    for todo in todos:
+        if todo.__contains__("~"):
+            todo = todo.replace("~", "")
+            todo = "\033[9m" + todo + "\033[0m"
+            new_list += todo+"\n"
+        else:
+            new_list += todo+"\n"
+    print(new_list)
+
+def default():
+    with open(f"{home}todos.md", "r") as todos:
+        todolist = todos.read()
+        print(header)
+        ParseAndPrint(todolist)
+
+
+def add(params):
+    if len(params) == 0:
+        print(
+            "nothing supplied to add function.\n Usage: todo add {param1} {param2} {param_n}"
+        )
+        exit()
+
+    with open(f"{home}todos.md", "r") as todos:
+        current = todos.read().split("\n")
+        
+        with open(f"{home}todos.md", "a") as fd:
+            for id, td in enumerate(params):
+                if id == 0:
+                    id = 1
+                fd.write(f"{len(current)-1+id}. {td}\n")
+
+
+def remove(params):
+    if len(params) == 0:
+        print(
+            "nothing supplied to remove function.\n Usage: todo rm {param1} {param2} {param_n}"
+        )
+        exit()
+    if isinstance(int(params[0]), int) == False:
+        print("Please supply valid todo indeces.")
+        exit()
+
+    with open(f"{home}todos.md", "r") as todos:
+        try:
+            current = todos.read().split("\n")
+            counter = 0
+
+            # removing each element at index while keeping count of how many removed
+            for param in params:
+                current.pop(int(param)-1 - counter)
+                counter += 1
+            
+            new = "\n".join(current)
+
+            with open(f"{home}todos.md", "w") as fd:
+                fd.write(new)
+        except IndexError:
+            print("the selected item doesnt appear to exist.")
+
+def finish(params):
+    # sanity checks so things dont break
+
+    if len(params) == 0:
+        print(
+            "nothing supplied to finish function.\n Usage: todo rm {param1} {param2} {param_n}"
+        )
+        exit()
+    if isinstance(int(params[0]), int) == False:
+        print("Please supply valid todo indeces.")
+        exit()
+
+    with open(f"{home}todos.md", "r") as todos:
+        try:
+            current = todos.read().split("\n")
+
+            # replacing each element at index with crossed out version
+            for param in params:
+
+                # check if already crossed out
+                if current[int(param) - 1][0] == "~":
+                    continue
+                
+                current[int(param)-1] = f"~~{current[int(param)-1]}~~"
+
+            # puts list back together into string
+            new = "\n".join(current)
+            with open(f"{home}todos.md", "w") as fd:
+                fd.write(new)
+        except IndexError:
+            print("the selected item doesnt appear to exist.")
+
+
+def main(action, params):
+    # setting up directory and todos file
+    
+    if os.path.isdir(home) == False:
+        os.mkdir(home)
+    if os.path.exists(f"{home}todos.md") == False:
+        with open(f"{home}todos.md", "w") as fd:
+            fd.write("")
+    
+    # function select
+
+    if arg == None:
+        default()
+    elif arg == "add":
+        add(params)
+    elif arg == "rm":
+        remove(params)
+    elif arg == "fn":
+        finish(params)
+
+
+if __name__ == "__main__":
+    try:
+        arg = sys.argv[1]
+    except:
+        arg = None
+    try:
+        params = sys.argv[2:]
+    except:
+        params = None
+
+    main(arg, params)
