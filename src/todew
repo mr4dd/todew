@@ -44,12 +44,15 @@ def add(params):
 
     with open(f"{home}todos.md", "r") as todos:
         current = todos.read().split("\n")
-        
+        current = len(current)
+
         with open(f"{home}todos.md", "a") as fd:
             for id, td in enumerate(params):
                 if id == 0:
                     id = 1
-                fd.write(f"{len(current)-1+id}. {td}\n")
+                fd.write(f"{current-1+id}. {td}\n")
+                current += 1
+    default()
 
 
 def remove(params):
@@ -71,13 +74,25 @@ def remove(params):
             for param in params:
                 current.pop(int(param)-1 - counter)
                 counter += 1
-            
-            new = "\n".join(current)
+           # making sure task indices actually make sense after deleting a task
+            new_tasks = []
+            try:
+                for index, task in enumerate(current):
+                    task = task.split(". ")
+                    task = str(index+1) + ". " + task[1]
+                    if task.__contains__("~"):
+                        task = "~~" + task
+                    new_tasks.append(task)
+            except IndexError:
+                pass
+
+            new = "\n".join(new_tasks)
 
             with open(f"{home}todos.md", "w") as fd:
                 fd.write(new)
         except IndexError:
             print("the selected item doesnt appear to exist.")
+    default()
 
 def finish(params):
     # sanity checks so things dont break
@@ -110,7 +125,7 @@ def finish(params):
                 fd.write(new)
         except IndexError:
             print("the selected item doesnt appear to exist.")
-
+    default()
 
 def main(action, params):
     # setting up directory and todos file
